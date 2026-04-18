@@ -149,30 +149,24 @@
   #scrubberFill {
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    background: rgba(0,0,0,0.35);
-    border-radius: 1px;
-    transition: width 0.3s ease;
+    background: rgba(0,0,0,0.45);
+    border-radius: 2px;
     pointer-events: none;
   }
-  .sdot {
+  #scrubberThumb {
     position: absolute;
     top: 50%;
-    transform: translate(-50%, -50%);
-    width: 5px;
-    height: 5px;
+    width: 11px; height: 11px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.18);
-    cursor: pointer;
-    transition: background 0.15s, transform 0.15s;
-    z-index: 1;
-  }
-  .sdot:hover {
-    background: rgba(0,0,0,0.5);
-    transform: translate(-50%, -50%) scale(1.5);
-  }
-  .sdot.active {
     background: #222;
-    transform: translate(-50%, -50%) scale(1.7);
+    transform: translate(-50%, -50%) scale(0.7);
+    transition: transform 0.15s;
+    pointer-events: none;
+  }
+  #scrubber:hover #scrubberTrack { height: 3px; }
+  #scrubber:hover #scrubberThumb,
+  #scrubber.dragging #scrubberThumb {
+    transform: translate(-50%, -50%) scale(1);
   }
 
   /* ── Bottom bar (counter + zoom) ── */
@@ -267,6 +261,7 @@
 <div id="scrubber">
   <div id="scrubberTrack">
     <div id="scrubberFill"></div>
+    <div id="scrubberThumb"></div>
   </div>
 </div>
 
@@ -322,6 +317,9 @@ const lensImg   = document.getElementById('lensImg');
 const zoomBtn   = document.getElementById('zoomBtn');
 const counterEl = document.getElementById('counter');
 const fillEl    = document.getElementById('scrubberFill');
+const thumbEl   = document.getElementById('scrubberThumb');
+const scrubEl   = document.getElementById('scrubber');
+const trackEl   = document.getElementById('scrubberTrack');
 
 function setWrapSize(w, h) {
   bookWrap.style.width  = w + 'px';
@@ -355,30 +353,62 @@ function preload(...srcs) {
 }
 
 // ── Scrubber ──
-function buildScrubber() {
-  const track = document.getElementById('scrubberTrack');
-  // Remove old dots
-  track.querySelectorAll('.sdot').forEach(d => d.remove());
-  for (let i = 0; i < TOTAL; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'sdot';
-    dot.style.left = (i / (TOTAL - 1) * 100) + '%';
-    dot.title = i === 0 ? 'Cover' : i === TOTAL - 1 ? 'Back cover' : `Pages ${i}–${i + 1}`;
-    dot.addEventListener('click', () => {
-      if (busy) return;
-      current = i;
-      renderStatic(i);
-    });
-    track.appendChild(dot);
-  }
+let scrubbing = false;
+
+function pctFromEvent(e) {
+  const rect = trackEl.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  return Math.max(0, Math.min((clientX - rect.left) / rect.width, 1));
+}
+
+function scrubToPage(pct) {
+  const idx = Math.round(pct * (TOTAL - 1));
+  if (idx === current) return;
+  // instant switch — no flip animation while scrubbing
+  busy = false;
+  current = idx;
+  renderStatic(idx);
 }
 
 function updateScrubber(idx) {
-  document.querySelectorAll('.sdot').forEach((d, i) => {
-    d.classList.toggle('active', i === idx);
-  });
-  fillEl.style.width = (idx / (TOTAL - 1) * 100) + '%';
+  const pct = idx / (TOTAL - 1) * 100;
+  fillEl.style.width  = pct + '%';
+  thumbEl.style.left  = pct + '%';
 }
+
+// Mouse
+scrubEl.addEventListener('mousedown', e => {
+  scrubbing = true;
+  scrubEl.classList.add('dragging');
+  scrubToPage(pctFromEvent(e));
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  if (!scrubbing) return;
+  scrubToPage(pctFromEvent(e));
+});
+document.addEventListener('mouseup', () => {
+  if (!scrubbing) return;
+  scrubbing = false;
+  scrubEl.classList.remove('dragging');
+});
+
+// Touch
+scrubEl.addEventListener('touchstart', e => {
+  scrubbing = true;
+  scrubEl.classList.add('dragging');
+  scrubToPage(pctFromEvent(e));
+  e.preventDefault();
+}, { passive: false });
+document.addEventListener('touchmove', e => {
+  if (!scrubbing) return;
+  scrubToPage(pctFromEvent(e));
+  e.preventDefault();
+}, { passive: false });
+document.addEventListener('touchend', () => {
+  scrubbing = false;
+  scrubEl.classList.remove('dragging');
+});
 
 // ── Render static ──
 function renderStatic(idx) {
@@ -491,7 +521,7 @@ zoomBtn.addEventListener('click', () => {
 });
 
 document.addEventListener('mousemove', e => {
-  if (!zoomActive || busy) { lensEl.style.display = 'none'; return; }
+  if (!zoomActive || busy || scrubbing) { lensEl.style.display = 'none'; return; }
   const rect = bookWrap.getBoundingClientRect();
   const cx = e.clientX - rect.left;
   const cy = e.clientY - rect.top;
@@ -534,7 +564,6 @@ document.addEventListener('touchend',   e => {
 }, {passive: true});
 
 // ── Init ──
-buildScrubber();
 renderStatic(0);
 </script>
 </body>
