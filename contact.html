@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Anastasiia Mulyndina</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #fff;
+    color: #111;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  nav {
+    position: fixed;
+    top: 20px;
+    left: 24px;
+    display: flex;
+    gap: 20px;
+    z-index: 100;
+  }
+  nav a {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: #333;
+    text-decoration: none;
+    opacity: 0.55;
+    transition: opacity 0.2s;
+  }
+  nav a:hover  { opacity: 1; }
+  nav a.active { opacity: 1; font-weight: 500; }
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 40px 60px;
+  }
+  .content {
+    max-width: 380px;
+    width: 100%;
+  }
+  h2 {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #bbb;
+    margin-bottom: 32px;
+  }
+  .item {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .item:first-of-type { border-top: 1px solid #f0f0f0; }
+  .label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #bbb;
+    min-width: 64px;
+    flex-shrink: 0;
+  }
+  .value {
+    font-size: 13px;
+    font-weight: 300;
+    color: #111;
+  }
+  a.value {
+    text-decoration: none;
+    color: #111;
+    transition: opacity 0.2s;
+  }
+  a.value:hover { opacity: 0.45; }
+</style>
+</head>
+<body>
+<nav>
+  <a href="about.html">About me</a>
+  <a href="CV.html">CV</a>
+  <a href="index.html">Portfolio</a>
+  <a href="contact.html" class="active">Contact me</a>
+</nav>
+<main>
+  <div class="content">
+    <h2>Get in touch</h2>
+    <div class="item">
+      <span class="label">Email</span>
+      <a class="value" href="mailto:amulyndina@gmail.com">amulyndina@gmail.com</a>
+    </div>
+    <div class="item">
+      <span class="label">Phone</span>
+      <a class="value" href="tel:+491746724516">+49 174 672 45 16</a>
+    </div>
+    <div class="item">
+      <span class="label">LinkedIn</span>
+      <a class="value" href="https://www.linkedin.com/in/anastasiia-mulyndina/" target="_blank" rel="noopener">anastasiia-mulyndina</a>
+    </div>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Anastasiia Mulyndina</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #fff;
+    color: #111;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  nav {
+    position: fixed;
+    top: 20px;
+    left: 24px;
+    display: flex;
+    gap: 20px;
+    z-index: 100;
+  }
+  nav a {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: #333;
+    text-decoration: none;
+    opacity: 0.55;
+    transition: opacity 0.2s;
+  }
+  nav a:hover  { opacity: 1; }
+  nav a.active { opacity: 1; font-weight: 500; }
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 40px 60px;
+  }
+  .content {
+    max-width: 680px;
+    width: 100%;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 32px;
+  }
+  p {
+    font-size: 13px;
+    line-height: 1.85;
+    font-weight: 300;
+    color: #333;
+    letter-spacing: 0.01em;
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a href="about.html" class="active">About me</a>
+  <a href="CV.html">CV</a>
+  <a href="index.html">Portfolio</a>
+  <a href="contact.html">Contact me</a>
+</nav>
+<main>
+  <div class="content">
+    <h1>Hi, I'm Anastasiia.</h1>
+    <p class="subtitle">Architect&nbsp;&nbsp;·&nbsp;&nbsp;Computational Design&nbsp;&nbsp;·&nbsp;&nbsp;Sustainability</p>
+    <p>Architecture graduate and MSc student with experience in parametric building design, urban simulation, and computational workflows. Proficient in Revit for building modelling, Grasshopper scripting for generative design and performance analysis. Interested in sustainability-driven design at the intersection of architecture, urban systems, and data.</p>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #e8e8e6;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed;
+    top: 20px;
+    left: 24px;
+    display: flex;
+    gap: 20px;
+    z-index: 300;
+  }
+  nav a {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: #333;
+    text-decoration: none;
+    opacity: 0.55;
+    transition: opacity 0.2s;
+  }
+  nav a:hover  { opacity: 1; }
+  nav a.active { opacity: 1; font-weight: 500; }
+
+  /* ── Arrow buttons ── */
+  .arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 300;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 20px 12px;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+  }
+  .arrow:hover { opacity: 0.7; }
+  .arrow svg {
+    width: 24px; height: 24px;
+    fill: none; stroke: #333;
+    stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  #arrowLeft  { left: 4px; }
+  #arrowRight { right: 4px; }
+
+  /* ── Stage ── */
+  #stage {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Book wrapper — shadow lives here, outside page content ── */
+  #bookWrap {
+    position: relative;
+    /* box-shadow falls naturally outside the element, not on page content */
+    box-shadow:
+      0 18px 50px -6px rgba(0,0,0,0.26),
+      0  6px 16px -2px rgba(0,0,0,0.12);
+  }
+
+  /* ── Page layers ── */
+  #bookWrap .layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    border-radius: 1px;
+  }
+  #bookWrap .layer img {
+    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    -webkit-user-drag: none;
+  }
+
+  /* ── Flip card ── */
+  #flipCard {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    transform-style: preserve-3d;
+    z-index: 10;
+    pointer-events: none;
+  }
+  #flipCard .face {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  #flipCard .face img {
+    display: block;
+    height: 100%;
+    -webkit-user-drag: none;
+  }
+  #flipBack { transform: rotateY(180deg); }
+
+  #flipFront::after, #flipBack::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  #flipFront::after {
+    background: linear-gradient(to left, rgba(0,0,0,0.10) 0%, transparent 50%);
+  }
+  #flipBack::after {
+    background: linear-gradient(to right, rgba(0,0,0,0.10) 0%, transparent 50%);
+  }
+
+  /* ── Bottom bar (counter + zoom) ── */
+  #bottomBar {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 300;
+  }
+  #counter {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: #aaa;
+    min-width: 48px;
+    text-align: center;
+  }
+  #zoomBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.35;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+  }
+  #zoomBtn:hover  { opacity: 0.75; }
+  #zoomBtn.on     { opacity: 1; }
+  #zoomBtn svg {
+    width: 16px; height: 16px;
+    fill: none; stroke: #444;
+    stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  /* ── Zoom lens ── */
+  #lens {
+    position: fixed;
+    width: 300px;
+    height: 200px;
+    overflow: hidden;
+    border: 1.5px solid rgba(200,200,200,0.6);
+    border-radius: 3px;
+    box-shadow: 0 6px 28px rgba(0,0,0,0.30);
+    display: none;
+    pointer-events: none;
+    z-index: 500;
+    background: #ddd;
+  }
+  #lensImg {
+    position: absolute;
+    display: block;
+    -webkit-user-drag: none;
+  }
+  /* subtle crosshair line in centre of lens */
+  #lens::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(255,255,255,0.18);
+    pointer-events: none;
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="about.html">About me</a>
+  <a href="CV.html">CV</a>
+  <a href="index.html" class="active">Portfolio</a>
+  <a href="contact.html">Contact me</a>
+</nav>
+
+<button class="arrow" id="arrowLeft"  aria-label="Previous"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+<button class="arrow" id="arrowRight" aria-label="Next"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></button>
+
+<div id="stage">
+  <div id="bookWrap">
+    <div class="layer" id="layerBase"><img id="imgBase" src="" alt=""></div>
+    <div id="flipCard">
+      <div class="face" id="flipFront"><img id="imgFront" src="" alt=""></div>
+      <div class="face" id="flipBack"> <img id="imgBack"  src="" alt=""></div>
+    </div>
+  </div>
+</div>
+
+<div id="bottomBar">
+  <div id="counter"></div>
+  <button id="zoomBtn" title="Toggle zoom lens">
+    <svg viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="7"/>
+      <line x1="16.5" y1="16.5" x2="22" y2="22"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Zoom lens overlay -->
+<div id="lens"><img id="lensImg" src="" alt=""></div>
+
+<script>
+// ─────────────────────────────────────────────────
+// Image dimensions (actual): single 3307×2339, spread 6614×2339
+// ─────────────────────────────────────────────────
+const TOTAL     = 31;
+const PAGE_W    = 3307;
+const PAGE_H    = 2339;
+const SPREAD_AR = (PAGE_W * 2) / PAGE_H;  // ≈ 2.828
+const SINGLE_AR = PAGE_W / PAGE_H;         // ≈ 1.414
+const V = '?v=3';  // cache-bust updated images
+
+const pages = Array.from({length: TOTAL}, (_, i) => `pages/${i + 1}.png${V}`);
+
+function isSingle(i) { return i === 0 || i === TOTAL - 1; }
+
+// ─────────────────────────────────────────────────
+// Layout
+// ─────────────────────────────────────────────────
+const PAD = 56;
+let spreadW, spreadH, halfW;
+
+function computeLayout() {
+  const vw = window.innerWidth  - PAD * 2;
+  const vh = window.innerHeight - PAD * 2;
+  if (vw / vh > SPREAD_AR) {
+    spreadH = vh;
+    spreadW = Math.round(vh * SPREAD_AR);
+  } else {
+    spreadW = vw;
+    spreadH = Math.round(vw / SPREAD_AR);
+  }
+  halfW = Math.round(spreadW / 2);
+}
+
+// ─────────────────────────────────────────────────
+// DOM
+// ─────────────────────────────────────────────────
+const bookWrap   = document.getElementById('bookWrap');
+const imgBase    = document.getElementById('imgBase');
+const flipCard   = document.getElementById('flipCard');
+const imgFront   = document.getElementById('imgFront');
+const imgBack    = document.getElementById('imgBack');
+const lensEl     = document.getElementById('lens');
+const lensImg    = document.getElementById('lensImg');
+const zoomBtn    = document.getElementById('zoomBtn');
+const counterEl  = document.getElementById('counter');
+
+function setWrapSize(w, h) {
+  bookWrap.style.width  = w + 'px';
+  bookWrap.style.height = h + 'px';
+}
+
+function setHalfFace(imgEl, src, side) {
+  imgEl.src = src;
+  imgEl.style.width = spreadW + 'px';
+  imgEl.style.marginLeft = side === 'right' ? '-' + halfW + 'px' : '0px';
+}
+
+function setSingleFace(imgEl, src) {
+  imgEl.src = src;
+  imgEl.style.width = '100%';
+  imgEl.style.marginLeft = '0px';
+}
+
+// ─────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────
+let current  = 0;
+let busy     = false;
+let zoomActive = false;
+const DURATION = 500;
+
+// ─────────────────────────────────────────────────
+// Preload
+// ─────────────────────────────────────────────────
+const loaded = {};
+function preload(...srcs) {
+  srcs.forEach(src => {
+    if (!src || loaded[src]) return;
+    loaded[src] = true;
+    const img = new Image(); img.src = src;
+  });
+}
+
+// ─────────────────────────────────────────────────
+// Static render
+// ─────────────────────────────────────────────────
+function renderStatic(idx) {
+  computeLayout();
+  setWrapSize(isSingle(idx) ? halfW : spreadW, spreadH);
+
+  imgBase.src = pages[idx];
+  imgBase.style.width = '100%';
+  imgBase.style.marginLeft = '0px';
+
+  flipCard.style.display = 'none';
+  flipCard.style.transform = '';
+
+  updateCounter(idx);
+  preload(pages[idx - 1], pages[idx + 1], pages[idx + 2]);
+}
+
+function updateCounter(idx) {
+  if (idx === 0 || idx === TOTAL - 1) counterEl.textContent = '';
+  else counterEl.textContent = `${idx} – ${idx + 1}`;
+}
+
+// ─────────────────────────────────────────────────
+// Flip animation
+// ─────────────────────────────────────────────────
+function doFlip(direction) {
+  if (busy) return;
+  const toIdx = direction === 'next' ? current + 1 : current - 1;
+  if (toIdx < 0 || toIdx >= TOTAL) return;
+  busy = true;
+  lensEl.style.display = 'none';  // hide lens during flip
+
+  computeLayout();
+  const fromIdx    = current;
+  const goNext     = direction === 'next';
+  const fromSingle = isSingle(fromIdx);
+  const toSingle   = isSingle(toIdx);
+
+  setWrapSize(spreadW, spreadH);
+
+  // Base layer = destination
+  if (toSingle) {
+    const isBack = toIdx === TOTAL - 1;
+    imgBase.src = pages[toIdx];
+    imgBase.style.width = spreadW + 'px';
+    imgBase.style.marginLeft = isBack ? '0px' : '-' + halfW + 'px';
+  } else {
+    imgBase.src = pages[toIdx];
+    imgBase.style.width = '100%';
+    imgBase.style.marginLeft = '0px';
+  }
+
+  flipCard.style.display = 'block';
+  flipCard.style.height  = spreadH + 'px';
+
+  if (goNext) {
+    flipCard.style.left          = halfW + 'px';
+    flipCard.style.width         = halfW + 'px';
+    flipCard.style.transformOrigin = 'left center';
+
+    if (fromSingle) setSingleFace(imgFront, pages[fromIdx]);
+    else            setHalfFace(imgFront, pages[fromIdx], 'right');
+
+    if (toSingle)   setSingleFace(imgBack, pages[toIdx]);
+    else            setHalfFace(imgBack, pages[toIdx], 'left');
+
+    animateFlip(0, -180, toIdx);
+  } else {
+    flipCard.style.left          = '0px';
+    flipCard.style.width         = halfW + 'px';
+    flipCard.style.transformOrigin = 'right center';
+
+    if (fromSingle) setSingleFace(imgFront, pages[fromIdx]);
+    else            setHalfFace(imgFront, pages[fromIdx], 'left');
+
+    if (toSingle) {
+      imgBack.src = pages[toIdx];
+      imgBack.style.width = spreadW + 'px';
+      imgBack.style.marginLeft = '-' + halfW + 'px';
+    } else {
+      setHalfFace(imgBack, pages[toIdx], 'right');
+    }
+
+    animateFlip(0, 180, toIdx);
+  }
+}
+
+function easeInOut(t) {
+  return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+}
+
+function animateFlip(startAngle, endAngle, toIdx) {
+  flipCard.style.transform = `rotateY(${startAngle}deg)`;
+  flipCard.getBoundingClientRect(); // force reflow
+
+  const t0 = performance.now();
+  function tick(now) {
+    const raw = Math.min((now - t0) / DURATION, 1);
+    const angle = startAngle + (endAngle - startAngle) * easeInOut(raw);
+    flipCard.style.transform = `rotateY(${angle}deg)`;
+    if (raw < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      current = toIdx;
+      renderStatic(toIdx);
+      busy = false;
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// ─────────────────────────────────────────────────
+// Zoom lens
+// ─────────────────────────────────────────────────
+const LENS_W = 300, LENS_H = 200;
+
+zoomBtn.addEventListener('click', () => {
+  zoomActive = !zoomActive;
+  zoomBtn.classList.toggle('on', zoomActive);
+  bookWrap.style.cursor = zoomActive ? 'crosshair' : '';
+  if (!zoomActive) lensEl.style.display = 'none';
+});
+
+document.addEventListener('mousemove', e => {
+  if (!zoomActive || busy) { lensEl.style.display = 'none'; return; }
+
+  const rect = bookWrap.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+
+  if (cx < 0 || cx > rect.width || cy < 0 || cy > rect.height) {
+    lensEl.style.display = 'none';
+    return;
+  }
+
+  // Zoomed image: 2× current display size
+  const zW = rect.width  * 2;
+  const zH = rect.height * 2;
+
+  lensImg.src = pages[current];
+  lensImg.style.width  = zW + 'px';
+  lensImg.style.height = zH + 'px';
+  lensImg.style.left   = (LENS_W / 2 - cx * 2) + 'px';
+  lensImg.style.top    = (LENS_H / 2 - cy * 2) + 'px';
+
+  lensEl.style.width  = LENS_W + 'px';
+  lensEl.style.height = LENS_H + 'px';
+  lensEl.style.display = 'block';
+
+  // Position lens: prefer right-of-cursor, flip left near edge
+  let lx = e.clientX + 26;
+  let ly = e.clientY - LENS_H / 2;
+  if (lx + LENS_W > window.innerWidth  - 8) lx = e.clientX - LENS_W - 26;
+  if (ly < 8) ly = 8;
+  if (ly + LENS_H > window.innerHeight - 8) ly = window.innerHeight - LENS_H - 8;
+  lensEl.style.left = lx + 'px';
+  lensEl.style.top  = ly + 'px';
+});
+
+// ─────────────────────────────────────────────────
+// Events
+// ─────────────────────────────────────────────────
+window.addEventListener('resize', () => renderStatic(current));
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') doFlip('next');
+  if (e.key === 'ArrowLeft')  doFlip('prev');
+});
+
+document.getElementById('arrowRight').addEventListener('click', () => doFlip('next'));
+document.getElementById('arrowLeft').addEventListener('click',  () => doFlip('prev'));
+
+bookWrap.addEventListener('click', e => {
+  if (zoomActive) return;  // no flip in zoom mode
+  const rect = bookWrap.getBoundingClientRect();
+  doFlip(e.clientX - rect.left > rect.width / 2 ? 'next' : 'prev');
+});
+
+let tx0 = 0;
+document.addEventListener('touchstart', e => { tx0 = e.touches[0].clientX; }, {passive: true});
+document.addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - tx0;
+  if (Math.abs(dx) > 44) doFlip(dx < 0 ? 'next' : 'prev');
+}, {passive: true});
+
+// ─────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────
+renderStatic(0);
+</script>
+</body>
+</html>
