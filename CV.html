@@ -38,8 +38,15 @@
     justify-content: center;
     padding: 72px 24px 48px;
   }
-  img {
+  .cv-wrap {
     max-width: 900px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+  }
+  img {
     width: 100%;
     height: auto;
     box-shadow:
@@ -47,6 +54,25 @@
       0  6px 16px -2px rgba(0,0,0,0.12);
     display: block;
   }
+  .dl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #333;
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    padding: 8px 16px;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+  }
+  .dl-btn:hover { opacity: 1; }
+  .dl-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 </style>
 </head>
 <body>
@@ -57,7 +83,13 @@
   <a href="contact.html">Contact me</a>
 </nav>
 <main>
-  <img src="CV/1.png?v=3" alt="Anastasiia Mulyndina — CV">
+  <div class="cv-wrap">
+    <a class="dl-btn" href="CV/cv.pdf" download="CV_Anastasiia_Mulyndina.pdf">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download PDF
+    </a>
+    <img src="CV/1.png?v=3" alt="Anastasiia Mulyndina — CV">
+  </div>
 </main>
 </body>
 </html>
