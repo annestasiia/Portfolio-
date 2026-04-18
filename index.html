@@ -58,19 +58,19 @@
   #arrowLeft  { left: 4px; }
   #arrowRight { right: 4px; }
 
-  /* ── Stage ── */
+  /* ── Stage — leaves room at bottom for scrubber ── */
   #stage {
     position: fixed;
-    inset: 0;
+    top: 0; left: 0; right: 0;
+    bottom: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  /* ── Book wrapper — shadow lives here, outside page content ── */
+  /* ── Book wrapper ── */
   #bookWrap {
     position: relative;
-    /* box-shadow falls naturally outside the element, not on page content */
     box-shadow:
       0 18px 50px -6px rgba(0,0,0,0.26),
       0  6px 16px -2px rgba(0,0,0,0.12);
@@ -127,10 +127,58 @@
     background: linear-gradient(to right, rgba(0,0,0,0.10) 0%, transparent 50%);
   }
 
+  /* ── Scrubber ── */
+  #scrubber {
+    position: fixed;
+    bottom: 38px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(600px, 72vw);
+    height: 20px;
+    display: flex;
+    align-items: center;
+    z-index: 300;
+  }
+  #scrubberTrack {
+    position: relative;
+    width: 100%;
+    height: 1.5px;
+    background: rgba(0,0,0,0.13);
+    border-radius: 1px;
+  }
+  #scrubberFill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: rgba(0,0,0,0.35);
+    border-radius: 1px;
+    transition: width 0.3s ease;
+    pointer-events: none;
+  }
+  .sdot {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+    z-index: 1;
+  }
+  .sdot:hover {
+    background: rgba(0,0,0,0.5);
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+  .sdot.active {
+    background: #222;
+    transform: translate(-50%, -50%) scale(1.7);
+  }
+
   /* ── Bottom bar (counter + zoom) ── */
   #bottomBar {
     position: fixed;
-    bottom: 18px;
+    bottom: 14px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -183,7 +231,6 @@
     display: block;
     -webkit-user-drag: none;
   }
-  /* subtle crosshair line in centre of lens */
   #lens::after {
     content: '';
     position: absolute;
@@ -216,6 +263,13 @@
   </div>
 </div>
 
+<!-- Scrubber timeline -->
+<div id="scrubber">
+  <div id="scrubberTrack">
+    <div id="scrubberFill"></div>
+  </div>
+</div>
+
 <div id="bottomBar">
   <div id="counter"></div>
   <button id="zoomBtn" title="Toggle zoom lens">
@@ -226,33 +280,27 @@
   </button>
 </div>
 
-<!-- Zoom lens overlay -->
 <div id="lens"><img id="lensImg" src="" alt=""></div>
 
 <script>
-// ─────────────────────────────────────────────────
-// Image dimensions (actual): single 3307×2339, spread 6614×2339
-// ─────────────────────────────────────────────────
 const TOTAL     = 31;
 const PAGE_W    = 3307;
 const PAGE_H    = 2339;
-const SPREAD_AR = (PAGE_W * 2) / PAGE_H;  // ≈ 2.828
-const SINGLE_AR = PAGE_W / PAGE_H;         // ≈ 1.414
-const V = '?v=3';  // cache-bust updated images
+const SPREAD_AR = (PAGE_W * 2) / PAGE_H;
+const SINGLE_AR = PAGE_W / PAGE_H;
+const V = '?v=4';
 
 const pages = Array.from({length: TOTAL}, (_, i) => `pages/${i + 1}.png${V}`);
 
 function isSingle(i) { return i === 0 || i === TOTAL - 1; }
 
-// ─────────────────────────────────────────────────
-// Layout
-// ─────────────────────────────────────────────────
-const PAD = 56;
+// ── Layout ──
+const H_PAD = 56, V_PAD = 40, BOTTOM_UI = 70;
 let spreadW, spreadH, halfW;
 
 function computeLayout() {
-  const vw = window.innerWidth  - PAD * 2;
-  const vh = window.innerHeight - PAD * 2;
+  const vw = window.innerWidth  - H_PAD * 2;
+  const vh = window.innerHeight - BOTTOM_UI - V_PAD * 2;
   if (vw / vh > SPREAD_AR) {
     spreadH = vh;
     spreadW = Math.round(vh * SPREAD_AR);
@@ -263,47 +311,40 @@ function computeLayout() {
   halfW = Math.round(spreadW / 2);
 }
 
-// ─────────────────────────────────────────────────
-// DOM
-// ─────────────────────────────────────────────────
-const bookWrap   = document.getElementById('bookWrap');
-const imgBase    = document.getElementById('imgBase');
-const flipCard   = document.getElementById('flipCard');
-const imgFront   = document.getElementById('imgFront');
-const imgBack    = document.getElementById('imgBack');
-const lensEl     = document.getElementById('lens');
-const lensImg    = document.getElementById('lensImg');
-const zoomBtn    = document.getElementById('zoomBtn');
-const counterEl  = document.getElementById('counter');
+// ── DOM ──
+const bookWrap  = document.getElementById('bookWrap');
+const imgBase   = document.getElementById('imgBase');
+const flipCard  = document.getElementById('flipCard');
+const imgFront  = document.getElementById('imgFront');
+const imgBack   = document.getElementById('imgBack');
+const lensEl    = document.getElementById('lens');
+const lensImg   = document.getElementById('lensImg');
+const zoomBtn   = document.getElementById('zoomBtn');
+const counterEl = document.getElementById('counter');
+const fillEl    = document.getElementById('scrubberFill');
 
 function setWrapSize(w, h) {
   bookWrap.style.width  = w + 'px';
   bookWrap.style.height = h + 'px';
 }
-
 function setHalfFace(imgEl, src, side) {
   imgEl.src = src;
   imgEl.style.width = spreadW + 'px';
   imgEl.style.marginLeft = side === 'right' ? '-' + halfW + 'px' : '0px';
 }
-
 function setSingleFace(imgEl, src) {
   imgEl.src = src;
   imgEl.style.width = '100%';
   imgEl.style.marginLeft = '0px';
 }
 
-// ─────────────────────────────────────────────────
-// State
-// ─────────────────────────────────────────────────
-let current  = 0;
-let busy     = false;
+// ── State ──
+let current    = 0;
+let busy       = false;
 let zoomActive = false;
 const DURATION = 500;
 
-// ─────────────────────────────────────────────────
-// Preload
-// ─────────────────────────────────────────────────
+// ── Preload ──
 const loaded = {};
 function preload(...srcs) {
   srcs.forEach(src => {
@@ -313,9 +354,33 @@ function preload(...srcs) {
   });
 }
 
-// ─────────────────────────────────────────────────
-// Static render
-// ─────────────────────────────────────────────────
+// ── Scrubber ──
+function buildScrubber() {
+  const track = document.getElementById('scrubberTrack');
+  // Remove old dots
+  track.querySelectorAll('.sdot').forEach(d => d.remove());
+  for (let i = 0; i < TOTAL; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'sdot';
+    dot.style.left = (i / (TOTAL - 1) * 100) + '%';
+    dot.title = i === 0 ? 'Cover' : i === TOTAL - 1 ? 'Back cover' : `Pages ${i}–${i + 1}`;
+    dot.addEventListener('click', () => {
+      if (busy) return;
+      current = i;
+      renderStatic(i);
+    });
+    track.appendChild(dot);
+  }
+}
+
+function updateScrubber(idx) {
+  document.querySelectorAll('.sdot').forEach((d, i) => {
+    d.classList.toggle('active', i === idx);
+  });
+  fillEl.style.width = (idx / (TOTAL - 1) * 100) + '%';
+}
+
+// ── Render static ──
 function renderStatic(idx) {
   computeLayout();
   setWrapSize(isSingle(idx) ? halfW : spreadW, spreadH);
@@ -328,6 +393,7 @@ function renderStatic(idx) {
   flipCard.style.transform = '';
 
   updateCounter(idx);
+  updateScrubber(idx);
   preload(pages[idx - 1], pages[idx + 1], pages[idx + 2]);
 }
 
@@ -336,15 +402,13 @@ function updateCounter(idx) {
   else counterEl.textContent = `${idx} – ${idx + 1}`;
 }
 
-// ─────────────────────────────────────────────────
-// Flip animation
-// ─────────────────────────────────────────────────
+// ── Flip animation ──
 function doFlip(direction) {
   if (busy) return;
   const toIdx = direction === 'next' ? current + 1 : current - 1;
   if (toIdx < 0 || toIdx >= TOTAL) return;
   busy = true;
-  lensEl.style.display = 'none';  // hide lens during flip
+  lensEl.style.display = 'none';
 
   computeLayout();
   const fromIdx    = current;
@@ -354,7 +418,6 @@ function doFlip(direction) {
 
   setWrapSize(spreadW, spreadH);
 
-  // Base layer = destination
   if (toSingle) {
     const isBack = toIdx === TOTAL - 1;
     imgBase.src = pages[toIdx];
@@ -373,22 +436,17 @@ function doFlip(direction) {
     flipCard.style.left          = halfW + 'px';
     flipCard.style.width         = halfW + 'px';
     flipCard.style.transformOrigin = 'left center';
-
     if (fromSingle) setSingleFace(imgFront, pages[fromIdx]);
     else            setHalfFace(imgFront, pages[fromIdx], 'right');
-
     if (toSingle)   setSingleFace(imgBack, pages[toIdx]);
     else            setHalfFace(imgBack, pages[toIdx], 'left');
-
     animateFlip(0, -180, toIdx);
   } else {
     flipCard.style.left          = '0px';
     flipCard.style.width         = halfW + 'px';
     flipCard.style.transformOrigin = 'right center';
-
     if (fromSingle) setSingleFace(imgFront, pages[fromIdx]);
     else            setHalfFace(imgFront, pages[fromIdx], 'left');
-
     if (toSingle) {
       imgBack.src = pages[toIdx];
       imgBack.style.width = spreadW + 'px';
@@ -396,7 +454,6 @@ function doFlip(direction) {
     } else {
       setHalfFace(imgBack, pages[toIdx], 'right');
     }
-
     animateFlip(0, 180, toIdx);
   }
 }
@@ -407,13 +464,11 @@ function easeInOut(t) {
 
 function animateFlip(startAngle, endAngle, toIdx) {
   flipCard.style.transform = `rotateY(${startAngle}deg)`;
-  flipCard.getBoundingClientRect(); // force reflow
-
+  flipCard.getBoundingClientRect();
   const t0 = performance.now();
   function tick(now) {
     const raw = Math.min((now - t0) / DURATION, 1);
-    const angle = startAngle + (endAngle - startAngle) * easeInOut(raw);
-    flipCard.style.transform = `rotateY(${angle}deg)`;
+    flipCard.style.transform = `rotateY(${startAngle + (endAngle - startAngle) * easeInOut(raw)}deg)`;
     if (raw < 1) {
       requestAnimationFrame(tick);
     } else {
@@ -425,9 +480,7 @@ function animateFlip(startAngle, endAngle, toIdx) {
   requestAnimationFrame(tick);
 }
 
-// ─────────────────────────────────────────────────
-// Zoom lens
-// ─────────────────────────────────────────────────
+// ── Zoom lens ──
 const LENS_W = 300, LENS_H = 200;
 
 zoomBtn.addEventListener('click', () => {
@@ -439,33 +492,20 @@ zoomBtn.addEventListener('click', () => {
 
 document.addEventListener('mousemove', e => {
   if (!zoomActive || busy) { lensEl.style.display = 'none'; return; }
-
   const rect = bookWrap.getBoundingClientRect();
   const cx = e.clientX - rect.left;
   const cy = e.clientY - rect.top;
-
   if (cx < 0 || cx > rect.width || cy < 0 || cy > rect.height) {
-    lensEl.style.display = 'none';
-    return;
+    lensEl.style.display = 'none'; return;
   }
-
-  // Zoomed image: 2× current display size
-  const zW = rect.width  * 2;
-  const zH = rect.height * 2;
-
+  const zW = rect.width * 2, zH = rect.height * 2;
   lensImg.src = pages[current];
   lensImg.style.width  = zW + 'px';
   lensImg.style.height = zH + 'px';
   lensImg.style.left   = (LENS_W / 2 - cx * 2) + 'px';
   lensImg.style.top    = (LENS_H / 2 - cy * 2) + 'px';
-
-  lensEl.style.width  = LENS_W + 'px';
-  lensEl.style.height = LENS_H + 'px';
   lensEl.style.display = 'block';
-
-  // Position lens: prefer right-of-cursor, flip left near edge
-  let lx = e.clientX + 26;
-  let ly = e.clientY - LENS_H / 2;
+  let lx = e.clientX + 26, ly = e.clientY - LENS_H / 2;
   if (lx + LENS_W > window.innerWidth  - 8) lx = e.clientX - LENS_W - 26;
   if (ly < 8) ly = 8;
   if (ly + LENS_H > window.innerHeight - 8) ly = window.innerHeight - LENS_H - 8;
@@ -473,25 +513,19 @@ document.addEventListener('mousemove', e => {
   lensEl.style.top  = ly + 'px';
 });
 
-// ─────────────────────────────────────────────────
-// Events
-// ─────────────────────────────────────────────────
+// ── Events ──
 window.addEventListener('resize', () => renderStatic(current));
-
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') doFlip('next');
   if (e.key === 'ArrowLeft')  doFlip('prev');
 });
-
 document.getElementById('arrowRight').addEventListener('click', () => doFlip('next'));
 document.getElementById('arrowLeft').addEventListener('click',  () => doFlip('prev'));
-
 bookWrap.addEventListener('click', e => {
-  if (zoomActive) return;  // no flip in zoom mode
+  if (zoomActive) return;
   const rect = bookWrap.getBoundingClientRect();
   doFlip(e.clientX - rect.left > rect.width / 2 ? 'next' : 'prev');
 });
-
 let tx0 = 0;
 document.addEventListener('touchstart', e => { tx0 = e.touches[0].clientX; }, {passive: true});
 document.addEventListener('touchend',   e => {
@@ -499,9 +533,8 @@ document.addEventListener('touchend',   e => {
   if (Math.abs(dx) > 44) doFlip(dx < 0 ? 'next' : 'prev');
 }, {passive: true});
 
-// ─────────────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────────────
+// ── Init ──
+buildScrubber();
 renderStatic(0);
 </script>
 </body>
