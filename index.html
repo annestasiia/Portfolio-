@@ -206,6 +206,65 @@
     stroke-linecap: round; stroke-linejoin: round;
   }
 
+  /* ── Download button ── */
+  #dlWrap {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 300;
+  }
+  .dl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #333;
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    padding: 8px 16px;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+    cursor: pointer;
+  }
+  .dl-btn:hover { opacity: 1; }
+  .dl-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  #dlDropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    overflow: hidden;
+    min-width: 160px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+  #dlDropdown.open { display: block; }
+  #dlDropdown a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  #dlDropdown a:hover { background: #f4f4f2; }
+  #dlDropdown a span.sz {
+    font-size: 10px;
+    color: #aaa;
+    letter-spacing: 0.05em;
+  }
+
   /* ── Zoom lens ── */
   #lens {
     position: fixed;
@@ -243,6 +302,17 @@
   <a href="index.html" class="active">Portfolio</a>
   <a href="contact.html">Contact me</a>
 </nav>
+
+<div id="dlWrap">
+  <button class="dl-btn" id="dlBtn">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Download PDF
+  </button>
+  <div id="dlDropdown">
+    <a href="Portfolio_pdf/10%20mb/Portfolio_10mb.pdf" download="Portfolio_Anastasiia_Mulyndina_10mb.pdf">Standard Quality <span class="sz">10 MB</span></a>
+    <a href="Portfolio_pdf/20%20mb/Portfolio_20mb.pdf" download="Portfolio_Anastasiia_Mulyndina_20mb.pdf">High Quality <span class="sz">20 MB</span></a>
+  </div>
+</div>
 
 <button class="arrow" id="arrowLeft"  aria-label="Previous"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
 <button class="arrow" id="arrowRight" aria-label="Next"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></button>
@@ -565,6 +635,16 @@ document.addEventListener('touchend',   e => {
 
 // ── Init ──
 renderStatic(0);
+
+// ── Download dropdown ──
+const dlBtn      = document.getElementById('dlBtn');
+const dlDropdown = document.getElementById('dlDropdown');
+dlBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  dlDropdown.classList.toggle('open');
+});
+document.addEventListener('click', () => dlDropdown.classList.remove('open'));
+dlDropdown.addEventListener('click', e => e.stopPropagation());
 </script>
 </body>
 </html>
