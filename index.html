@@ -187,31 +187,19 @@
     min-width: 48px;
     text-align: center;
   }
-  #zoomBtn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    opacity: 0.35;
-    transition: opacity 0.2s;
-    display: flex;
-    align-items: center;
-  }
-  #zoomBtn:hover  { opacity: 0.75; }
-  #zoomBtn.on     { opacity: 1; }
-  #zoomBtn svg {
-    width: 16px; height: 16px;
-    fill: none; stroke: #444;
-    stroke-width: 1.8;
-    stroke-linecap: round; stroke-linejoin: round;
-  }
-
-  /* ── Download button ── */
-  #dlWrap {
+  /* ── Top-right controls (Zoom + Download) ── */
+  #topRight {
     position: fixed;
     top: 20px;
     right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     z-index: 300;
+  }
+  #zoomBtn.on { opacity: 1; background: #f0f0ee; border-color: #bbb; }
+  #dlWrap {
+    position: relative;
   }
   .dl-btn {
     display: inline-flex;
@@ -268,8 +256,8 @@
   /* ── Zoom lens ── */
   #lens {
     position: fixed;
-    width: 300px;
-    height: 200px;
+    width: 600px;
+    height: 400px;
     overflow: hidden;
     border: 1.5px solid rgba(200,200,200,0.6);
     border-radius: 3px;
@@ -303,14 +291,20 @@
   <a href="contact.html">Contact me</a>
 </nav>
 
-<div id="dlWrap">
-  <button class="dl-btn" id="dlBtn">
-    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Download PDF
+<div id="topRight">
+  <button class="dl-btn" id="zoomBtn">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+    Zoom
   </button>
-  <div id="dlDropdown">
-    <a href="Portfolio_pdf/10%20mb/Portfolio_10mb.pdf" download="Portfolio_Anastasiia_Mulyndina_10mb.pdf">Standard Quality <span class="sz">10 MB</span></a>
-    <a href="Portfolio_pdf/20%20mb/Portfolio_20mb.pdf" download="Portfolio_Anastasiia_Mulyndina_20mb.pdf">High Quality <span class="sz">20 MB</span></a>
+  <div id="dlWrap">
+    <button class="dl-btn" id="dlBtn">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download PDF
+    </button>
+    <div id="dlDropdown">
+      <a href="Portfolio_pdf/10%20mb/Portfolio_10mb.pdf" download="Portfolio_Anastasiia_Mulyndina_10mb.pdf">Standard Quality <span class="sz">10 MB</span></a>
+      <a href="Portfolio_pdf/20%20mb/Portfolio_20mb.pdf" download="Portfolio_Anastasiia_Mulyndina_20mb.pdf">High Quality <span class="sz">20 MB</span></a>
+    </div>
   </div>
 </div>
 
@@ -337,12 +331,6 @@
 
 <div id="bottomBar">
   <div id="counter"></div>
-  <button id="zoomBtn" title="Toggle zoom lens">
-    <svg viewBox="0 0 24 24">
-      <circle cx="11" cy="11" r="7"/>
-      <line x1="16.5" y1="16.5" x2="22" y2="22"/>
-    </svg>
-  </button>
 </div>
 
 <div id="lens"><img id="lensImg" src="" alt=""></div>
@@ -581,7 +569,7 @@ function animateFlip(startAngle, endAngle, toIdx) {
 }
 
 // ── Zoom lens ──
-const LENS_W = 300, LENS_H = 200;
+const LENS_W = 600, LENS_H = 400;
 
 zoomBtn.addEventListener('click', () => {
   zoomActive = !zoomActive;
