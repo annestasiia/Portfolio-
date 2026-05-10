@@ -256,8 +256,8 @@
   /* ── Zoom lens ── */
   #lens {
     position: fixed;
-    width: 600px;
-    height: 400px;
+    width: 1200px;
+    height: 800px;
     overflow: hidden;
     border: 1.5px solid rgba(200,200,200,0.6);
     border-radius: 3px;
@@ -569,7 +569,7 @@ function animateFlip(startAngle, endAngle, toIdx) {
 }
 
 // ── Zoom lens ──
-const LENS_W = 600, LENS_H = 400;
+const LENS_W = 1200, LENS_H = 800;
 
 zoomBtn.addEventListener('click', () => {
   zoomActive = !zoomActive;
@@ -593,8 +593,9 @@ document.addEventListener('mousemove', e => {
   lensImg.style.left   = (LENS_W / 2 - cx * 2) + 'px';
   lensImg.style.top    = (LENS_H / 2 - cy * 2) + 'px';
   lensEl.style.display = 'block';
-  let lx = e.clientX + 26, ly = e.clientY - LENS_H / 2;
-  if (lx + LENS_W > window.innerWidth  - 8) lx = e.clientX - LENS_W - 26;
+  let lx = e.clientX - LENS_W / 2, ly = e.clientY - LENS_H / 2;
+  if (lx < 8) lx = 8;
+  if (lx + LENS_W > window.innerWidth  - 8) lx = window.innerWidth  - LENS_W - 8;
   if (ly < 8) ly = 8;
   if (ly + LENS_H > window.innerHeight - 8) ly = window.innerHeight - LENS_H - 8;
   lensEl.style.left = lx + 'px';
