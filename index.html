@@ -570,15 +570,11 @@ function animateFlip(startAngle, endAngle, toIdx) {
 
 // ── Zoom lens ──
 const LENS_W = 1200, LENS_H = 800;
+const ZOOM_BASE = 2.0, ZOOM_MIN = 1.0, ZOOM_MAX = 3.0, ZOOM_STEP = 0.1;
+let zoomScale = ZOOM_BASE;
+let lastMouseE = null;
 
-zoomBtn.addEventListener('click', () => {
-  zoomActive = !zoomActive;
-  zoomBtn.classList.toggle('on', zoomActive);
-  bookWrap.style.cursor = zoomActive ? 'crosshair' : '';
-  if (!zoomActive) lensEl.style.display = 'none';
-});
-
-document.addEventListener('mousemove', e => {
+function applyLens(e) {
   if (!zoomActive || busy || scrubbing) { lensEl.style.display = 'none'; return; }
   const rect = bookWrap.getBoundingClientRect();
   const cx = e.clientX - rect.left;
@@ -586,12 +582,12 @@ document.addEventListener('mousemove', e => {
   if (cx < 0 || cx > rect.width || cy < 0 || cy > rect.height) {
     lensEl.style.display = 'none'; return;
   }
-  const zW = rect.width * 2, zH = rect.height * 2;
+  const zW = rect.width * zoomScale, zH = rect.height * zoomScale;
   lensImg.src = pages[current];
   lensImg.style.width  = zW + 'px';
   lensImg.style.height = zH + 'px';
-  lensImg.style.left   = (LENS_W / 2 - cx * 2) + 'px';
-  lensImg.style.top    = (LENS_H / 2 - cy * 2) + 'px';
+  lensImg.style.left   = (LENS_W / 2 - cx * zoomScale) + 'px';
+  lensImg.style.top    = (LENS_H / 2 - cy * zoomScale) + 'px';
   lensEl.style.display = 'block';
   let lx = e.clientX - LENS_W / 2, ly = e.clientY - LENS_H / 2;
   if (lx < 8) lx = 8;
@@ -600,7 +596,26 @@ document.addEventListener('mousemove', e => {
   if (ly + LENS_H > window.innerHeight - 8) ly = window.innerHeight - LENS_H - 8;
   lensEl.style.left = lx + 'px';
   lensEl.style.top  = ly + 'px';
+}
+
+zoomBtn.addEventListener('click', () => {
+  zoomActive = !zoomActive;
+  zoomBtn.classList.toggle('on', zoomActive);
+  bookWrap.style.cursor = zoomActive ? 'crosshair' : '';
+  if (!zoomActive) { lensEl.style.display = 'none'; zoomScale = ZOOM_BASE; }
 });
+
+document.addEventListener('mousemove', e => {
+  lastMouseE = e;
+  applyLens(e);
+});
+
+document.addEventListener('wheel', e => {
+  if (!zoomActive) return;
+  e.preventDefault();
+  zoomScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomScale + (e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP)));
+  if (lastMouseE) applyLens(lastMouseE);
+}, { passive: false });
 
 // ── Events ──
 window.addEventListener('resize', () => renderStatic(current));
